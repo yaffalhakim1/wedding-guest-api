@@ -30,12 +30,9 @@ const createTables = () => {
         )
       `,
         (err) => {
-          if (err) {
+          if (err)
             console.error("❌ Error creating admins table:", err.message);
-            reject(err);
-          } else {
-            console.log("✅ Admins table created");
-          }
+          else console.log("✅ Admins table ready");
         },
       );
 
@@ -48,16 +45,15 @@ const createTables = () => {
           is_vip BOOLEAN DEFAULT 0,
           checked_in BOOLEAN DEFAULT 0,
           checked_in_at DATETIME,
+          guest_group TEXT,
+          attendance_count INTEGER DEFAULT 1,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
       `,
         (err) => {
-          if (err) {
+          if (err)
             console.error("❌ Error creating guests table:", err.message);
-            reject(err);
-          } else {
-            console.log("✅ Guests table created");
-          }
+          else console.log("✅ Guests table ready");
         },
       );
 
@@ -76,15 +72,77 @@ const createTables = () => {
         )
       `,
         (err) => {
-          if (err) {
+          if (err)
             console.error("❌ Error creating event_config table:", err.message);
-            reject(err);
-          } else {
-            console.log("✅ Event config table created");
-            resolve();
-          }
+          else console.log("✅ Event config table ready");
         },
       );
+
+      // Wishes table
+      db.run(
+        `
+        CREATE TABLE IF NOT EXISTS wishes (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          message TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `,
+        (err) => {
+          if (err)
+            console.error("❌ Error creating wishes table:", err.message);
+          else console.log("✅ Wishes table ready");
+        },
+      );
+
+      // Resolve after all tables are created/checked
+      // (Simplified for SQLite serialize which runs sequentially)
+      resolve();
+    });
+  });
+};
+
+// Migrate database (Add missing columns)
+const migrateDatabase = () => {
+  return new Promise((resolve, reject) => {
+    console.log("🔄 Checking for migrations...");
+
+    db.serialize(() => {
+      // Check guests table for missing columns
+      db.all("PRAGMA table_info(guests)", (err, columns) => {
+        if (err) {
+          console.error("❌ Error checking guests schema:", err.message);
+          return reject(err);
+        }
+
+        const columnNames = columns.map((c) => c.name);
+        console.log("📊 Current columns:", columnNames.join(", "));
+
+        // Add guest_group if missing
+        if (!columnNames.includes("guest_group")) {
+          console.log("🔸 Adding missing column: guest_group");
+          db.run("ALTER TABLE guests ADD COLUMN guest_group TEXT", (err) => {
+            if (err) console.error("❌ Error adding guest_group:", err.message);
+            else console.log("✅ Added guest_group column");
+          });
+        }
+
+        // Add attendance_count if missing
+        if (!columnNames.includes("attendance_count")) {
+          console.log("🔸 Adding missing column: attendance_count");
+          db.run(
+            "ALTER TABLE guests ADD COLUMN attendance_count INTEGER DEFAULT 1",
+            (err) => {
+              if (err)
+                console.error("❌ Error adding attendance_count:", err.message);
+              else console.log("✅ Added attendance_count column");
+            },
+          );
+        }
+
+        // Wait a bit for migrations to finish (SQLite serialize is sync-ish but safer to wait)
+        setTimeout(resolve, 500);
+      });
     });
   });
 };
@@ -184,17 +242,21 @@ const initDatabase = async () => {
     console.log("\n🚀 Initializing database...\n");
 
     await createTables();
+    await migrateDatabase(); // Run migrations
     await seedAdmin();
     await seedEventConfig();
 
     console.log("\n✅ Database initialization complete!\n");
 
-    db.close((err) => {
-      if (err) {
-        console.error("❌ Error closing database:", err.message);
-      }
-      process.exit(0);
-    });
+    // Close DB connection after a short delay to ensure async ops finish
+    setTimeout(() => {
+      db.close((err) => {
+        if (err) {
+          console.error("❌ Error closing database:", err.message);
+        }
+        process.exit(0);
+      });
+    }, 1000);
   } catch (error) {
     console.error("\n❌ Database initialization failed:", error.message);
     db.close();
