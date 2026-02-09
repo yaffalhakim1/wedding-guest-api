@@ -5,3 +5,7 @@ database.db-shm
 database.db-wal
 *.log
 .DS_Store
+
+# Generated files
+*.xlsx
+verify_export.js

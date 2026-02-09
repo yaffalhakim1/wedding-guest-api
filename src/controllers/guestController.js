@@ -248,3 +248,57 @@ exports.getStats = (req, res, next) => {
     },
   );
 };
+
+// Export guests to Excel
+exports.exportGuests = (req, res, next) => {
+  const ExcelJS = require("exceljs");
+
+  db.all(
+    "SELECT * FROM guests ORDER BY created_at DESC",
+    [],
+    async (err, guests) => {
+      if (err) return next(err);
+
+      try {
+        const workbook = new ExcelJS.Workbook();
+        const worksheet = workbook.addWorksheet("Guests");
+
+        worksheet.columns = [
+          { header: "Name", key: "name", width: 30 },
+          { header: "Group", key: "group", width: 20 },
+          { header: "Pax", key: "attendanceCount", width: 10 },
+          { header: "VIP", key: "isVIP", width: 10 },
+          { header: "Checked In", key: "checkedIn", width: 15 },
+          { header: "Checked In At", key: "checkedInAt", width: 20 },
+        ];
+
+        guests.forEach((guest) => {
+          worksheet.addRow({
+            name: guest.name,
+            group: guest.guest_group || "-",
+            attendanceCount: guest.attendance_count || 1,
+            isVIP: guest.is_vip ? "Yes" : "No",
+            checkedIn: guest.checked_in ? "Yes" : "No",
+            checkedInAt: guest.checked_in_at
+              ? new Date(guest.checked_in_at).toLocaleString("id-ID")
+              : "-",
+          });
+        });
+
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        );
+        res.setHeader(
+          "Content-Disposition",
+          "attachment; filename=guests.xlsx",
+        );
+
+        await workbook.xlsx.write(res);
+        res.end();
+      } catch (error) {
+        next(error);
+      }
+    },
+  );
+};

@@ -12,6 +12,9 @@ router.get("/", guestController.getAllGuests);
 // GET /api/guests/stats - Get statistics
 router.get("/stats", guestController.getStats);
 
+// GET /api/guests/export - Export to Excel
+router.get("/export", guestController.exportGuests);
+
 // GET /api/guests/:id - Get single guest
 router.get("/:id", guestController.getGuest);
 
