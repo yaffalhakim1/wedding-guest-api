@@ -8,16 +8,16 @@ const dbPath = path.resolve(
   process.env.DATABASE_PATH || "database.db",
 );
 
-// Create connection
+/**
+ * Database connection module
+ * WAL mode and foreign keys are enabled for concurrency and integrity
+ */
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
-    console.error("Error opening database:", err.message);
-  } else {
-    console.log("Connected to SQLite database");
+    console.error("❌ Error opening database:", err.message);
   }
 });
 
-// Enable foreign keys and WAL mode for concurrent access
 db.serialize(() => {
   db.run("PRAGMA foreign_keys = ON");
   db.run("PRAGMA journal_mode = WAL");

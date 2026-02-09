@@ -1,5 +1,7 @@
 const errorHandler = (err, req, res, next) => {
-  console.error("Error:", err);
+  if (process.env.NODE_ENV === "development") {
+    console.error("Error:", err);
+  }
 
   // Default error
   let statusCode = err.statusCode || 500;
@@ -17,8 +19,14 @@ const errorHandler = (err, req, res, next) => {
   }
 
   res.status(statusCode).json({
-    error: message,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    success: false,
+    data: null,
+    error: {
+      message,
+      code: err.code || "INTERNAL_ERROR",
+      ...(err.details && { details: err.details }),
+      ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
+    },
   });
 };
 

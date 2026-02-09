@@ -32,7 +32,8 @@ app.get("/health", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/guests", guestRoutes);
 app.use("/api/config", configRoutes);
-app.use("/api/invitation", invitationRoutes);
+app.use("/api/invitations", invitationRoutes);
+
 app.use("/api/wishes", wishesRoutes);
 
 // 404 handler

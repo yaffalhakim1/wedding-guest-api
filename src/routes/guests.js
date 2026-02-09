@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const guestController = require("../controllers/guestController");
 const auth = require("../middleware/auth");
+const validate = require("../middleware/validate");
+const { guestSchema } = require("../validations/guestSchema");
 
 // All routes are protected
 router.use(auth);
@@ -19,10 +21,10 @@ router.get("/export", guestController.exportGuests);
 router.get("/:id", guestController.getGuest);
 
 // POST /api/guests - Create guest
-router.post("/", guestController.createGuest);
+router.post("/", validate(guestSchema), guestController.createGuest);
 
 // PUT /api/guests/:id - Update guest
-router.put("/:id", guestController.updateGuest);
+router.put("/:id", validate(guestSchema), guestController.updateGuest);
 
 // DELETE /api/guests/:id - Delete guest
 router.delete("/:id", guestController.deleteGuest);
