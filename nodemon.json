@@ -1,0 +1,9 @@
+{
+  "ignore": [
+    "database.db",
+    "database.db-journal",
+    "database.db-wal",
+    "database.db-shm"
+  ],
+  "ext": "js,json"
+}
