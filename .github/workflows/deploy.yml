@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Server
+      - name: Deploy Backend Production
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -22,4 +22,5 @@ jobs:
             cd ~/wedding-guest-api
             git pull origin main
             npm install --production
+            npm run init-db
             pm2 restart wedding-api
